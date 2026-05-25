@@ -89,7 +89,7 @@ export default async function startServe(randomPort: Boolean = false) {
   app.use("/assets", express.static(assetsDir, { acceptRanges: false }));
 
   // data/web 静态网站
-  const webDir = u.getPath("web");
+  const webDir = process.env.WEB_DIR ? path.resolve(process.env.WEB_DIR) : u.getPath("web");
   if (fs.existsSync(webDir)) {
     console.log("静态网站目录:", webDir);
     app.use(express.static(webDir, { acceptRanges: false }));
@@ -133,7 +133,8 @@ export default async function startServe(randomPort: Boolean = false) {
     res.status(err.status || 500).send(err);
   });
 
-  const port = randomPort ? 0 : 10588;
+  const envPort = Number(process.env.PORT);
+  const port = randomPort ? 0 : Number.isFinite(envPort) && envPort > 0 ? envPort : 10588;
   return await new Promise((resolve) => {
     server.listen(port, async () => {
       const address = server.address();

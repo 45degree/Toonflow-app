@@ -1,9 +1,12 @@
 node_modules
 build
 dist
+web/node_modules
+web/dist
 logs
 uploads
 .git
+web/.git
 .gitignore
 *.md
 LICENSE
@@ -14,3 +17,7 @@ env
 docs
 *.log
 .env*
+data/web
+data/serve
+data/oss
+data/logs

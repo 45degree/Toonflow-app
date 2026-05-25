@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import fs from "fs";
 import path from "path";
+import { execFileSync } from "child_process";
 
 // 打包默认使用 prod 环境变量
 if (!process.env.NODE_ENV) {
@@ -8,6 +9,34 @@ if (!process.env.NODE_ENV) {
 }
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8"));
+
+function buildWeb() {
+  if (process.env.SKIP_WEB_BUILD === "1") return;
+
+  const webDir = path.resolve("web");
+  const webPackage = path.join(webDir, "package.json");
+  if (!fs.existsSync(webPackage)) {
+    console.warn("⚠️ 未找到 web/package.json，跳过前端构建");
+    return;
+  }
+
+  console.log("🔨 开始构建前端...\n");
+  if (!fs.existsSync(path.join(webDir, "node_modules"))) {
+    execFileSync("yarn", ["install", "--frozen-lockfile"], { cwd: webDir, stdio: "inherit" });
+  }
+  execFileSync("yarn", ["build-only"], {
+    cwd: webDir,
+    stdio: "inherit",
+    env: { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? "--max-old-space-size=4096" },
+  });
+
+  const webDist = path.join(webDir, "dist");
+  const targetWebDir = path.resolve("data", "web");
+  fs.rmSync(targetWebDir, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(targetWebDir), { recursive: true });
+  fs.cpSync(webDist, targetWebDir, { recursive: true });
+  console.log("✅ 前端构建完成: data/web\n");
+}
 
 const external = [
   "electron",
@@ -70,7 +99,9 @@ const mainBuildConfig: esbuild.BuildOptions = {
 
 (async () => {
   try {
-    console.log("🔨 开始构建...\n");
+    await buildWeb();
+
+    console.log("🔨 开始构建后端...\n");
 
     // 并行构建
     await Promise.all([esbuild.build(appBuildConfig), esbuild.build(mainBuildConfig)]);

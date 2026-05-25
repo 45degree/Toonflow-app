@@ -43,8 +43,6 @@ db.sqlite
 db.sqlite-shm
 db.sqlite-wal
 
-web/*
-
 *.sqlite
 
 router.ts
@@ -53,5 +51,7 @@ database.d.ts
 
 .devtools
 data/oss/*
+data/web
+data/serve
 data/test.sqlite
 version.txt
