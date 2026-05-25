@@ -43,15 +43,17 @@ export default router.post(
           prompt: prompt ?? "",
           imageId: idData,
         });
-    } else {
-      await u
-        .db("o_assets")
-        .where("id", id)
-        .update({
-          prompt: prompt ?? "",
-          imageId: imageId,
-        });
+      const imageUrl = await u.oss.getSmallImageUrl(savePath);
+      res.status(200).send(success({ message: "保存资产图片成功", imageUrl, imageId: idData }));
+      return;
     }
+    await u
+      .db("o_assets")
+      .where("id", id)
+      .update({
+        prompt: prompt ?? "",
+        imageId: imageId,
+      });
     res.status(200).send(success({ message: "保存资产图片成功" }));
   },
 );

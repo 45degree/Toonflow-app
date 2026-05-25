@@ -18,6 +18,7 @@ type NodeId = (typeof NODE_IDS)[keyof typeof NODE_IDS];
 export interface DeriveAsset {
   id: number;
   assetsId: number | null;
+  imageId?: number;
   name: string;
   prompt: string;
   desc: string;
@@ -30,6 +31,7 @@ export interface DeriveAsset {
 
 export interface AssetItem {
   id: number;
+  imageId?: number;
   name: string;
   desc: string;
   prompt: string;

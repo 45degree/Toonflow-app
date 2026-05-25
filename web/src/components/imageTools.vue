@@ -25,6 +25,13 @@
         </template>
       </t-button>
     </t-tooltip>
+    <t-tooltip v-if="showDelete" theme="danger" :content="$t('components.imageTools.delete')" :placement="placement">
+      <t-button variant="outline" size="small" shape="square" theme="danger" @click.stop="$emit('delete')">
+        <template #icon>
+          <i-delete size="16" />
+        </template>
+      </t-button>
+    </t-tooltip>
   </div>
 </template>
 
@@ -36,6 +43,11 @@ const props = defineProps<{
   placement?: string;
   position?: "none" | "br" | "bl" | "tr" | "tl";
   margin?: string;
+  showDelete?: boolean;
+}>();
+
+defineEmits<{
+  delete: [];
 }>();
 
 const placement = computed<any>(function () {

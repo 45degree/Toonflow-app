@@ -26,9 +26,13 @@ const DEFAULTS: {
 function vectorSearch(rows: MemoryRow[], queryEmbedding: number[], limit: number) {
   return rows
     .map((row) => {
-      const emb: number[] = JSON.parse(row.embedding ?? "[]");
+      let emb: number[] = [];
+      try {
+        emb = JSON.parse(row.embedding ?? "[]");
+      } catch {}
       return { ...row, similarity: cosineSimilarity(queryEmbedding, emb) };
     })
+    .filter((row) => Number.isFinite(row.similarity))
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, limit);
 }

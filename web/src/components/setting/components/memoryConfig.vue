@@ -3,18 +3,6 @@
     <t-alert theme="warning" class="topAlert" :message="$t('settings.memory.warning')" />
 
     <t-form :data="formData" labelAlign="top" labelWidth="180px" class="memoryForm" @submit="handleSave">
-      <t-card :title="$t('settings.memory.vectorModelConfig')" :bordered="true" style="margin-top: 16px">
-        <t-form-item :label="$t('settings.memory.modelFilePath')" name="modelOnnxFile">
-          <t-tag-input v-model="formData.modelOnnxFile" clearable />
-          <template #help>向量模型文件路径：/data/models/{{ formData.modelOnnxFile ? formData.modelOnnxFile.join("/") : "" }}</template>
-        </t-form-item>
-        <t-form-item :label="$t('settings.memory.quantizationType')" name="modelDtype">
-          <t-select v-model="formData.modelDtype" :placeholder="$t('settings.memory.quantizationPlaceholder')">
-            <t-option v-for="item in dtypeOptions" :key="item" :value="item" :label="item" />
-          </t-select>
-          <template #help></template>
-        </t-form-item>
-      </t-card>
       <t-card :title="$t('settings.memory.memoryParams')" :bordered="true" style="margin-top: 16px">
         <t-form-item :label="$t('settings.memory.messagesPerSummary')" name="messagesPerSummary">
           <t-input-number v-model="formData.messagesPerSummary" :min="1" :max="200" :allowInputOverLimit="false" />
@@ -63,8 +51,6 @@ interface MemoryConfigForm {
   summaryLimit: number;
   ragLimit: number;
   deepRetrieveSummaryLimit: number;
-  modelOnnxFile: string[];
-  modelDtype: string;
 }
 
 const formData = ref<MemoryConfigForm>({
@@ -74,11 +60,7 @@ const formData = ref<MemoryConfigForm>({
   summaryLimit: 10,
   ragLimit: 3,
   deepRetrieveSummaryLimit: 5,
-  modelOnnxFile: ["all-MiniLM-L6-v2", "onnx", "model_fp16.onnx"], // 模型文件路径
-  modelDtype: "fp16",
 });
-
-const dtypeOptions = ["fp16", "auto", "fp32", "q8", "int8", "uint8", "q4", "bnb4", "q4f16"];
 
 const loading = ref(false);
 const saving = ref(false);
@@ -95,8 +77,6 @@ async function getMemoryConfig() {
       summaryLimit: data.summaryLimit ?? 10,
       ragLimit: data.ragLimit ?? 3,
       deepRetrieveSummaryLimit: data.deepRetrieveSummaryLimit ?? 5,
-      modelOnnxFile: data.modelOnnxFile ?? ["all-MiniLM-L6-v2", "onnx", "model_fp16.onnx"], // 模型文件路径
-      modelDtype: data.modelDtype ?? "fp16",
     };
   } catch (error: any) {
     window.$message.warning(error?.message);
@@ -149,8 +129,6 @@ function handleRestory() {
     summaryLimit: 10,
     ragLimit: 3,
     deepRetrieveSummaryLimit: 5,
-    modelOnnxFile: ["all-MiniLM-L6-v2", "onnx", "model_fp16.onnx"], // 模型文件路径
-    modelDtype: "fp16",
   };
   handleSave();
 }

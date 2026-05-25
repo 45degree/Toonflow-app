@@ -309,6 +309,18 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
             value: "fp16",
           },
           {
+            key: "embeddingApiUrl",
+            value: "https://api.openai.com/v1/embeddings",
+          },
+          {
+            key: "embeddingApiKey",
+            value: "",
+          },
+          {
+            key: "embeddingModel",
+            value: "text-embedding-3-small",
+          },
+          {
             key: "switchAiDevTool",
             value: "0",
           },
@@ -609,6 +621,12 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
           {
             id: "vidu",
             inputValues: "{}",
+            models: "[]",
+            enable: 0,
+          },
+          {
+            id: "siliconflow",
+            inputValues: '{"apiKey":"","baseUrl":"https://api.siliconflow.cn/v1"}',
             models: "[]",
             enable: 0,
           },
@@ -927,10 +945,20 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
             state: 1,
           },
         ];
+        const embeddingApiKey = await knex("o_setting").where("key", "embeddingApiKey").select("value").first();
+        if (!embeddingApiKey?.value) {
+          console.warn("[初始化数据库] Embedding API Key 未配置，已跳过 Skill embedding 生成");
+          await knex("o_skillList").insert(list);
+          return;
+        }
         await Promise.all(
           list.map(async (item) => {
-            const embedding = await getEmbedding(item.description);
-            item.embedding = JSON.stringify(embedding);
+            try {
+              const embedding = await getEmbedding(item.description);
+              item.embedding = JSON.stringify(embedding);
+            } catch (e) {
+              console.warn("[初始化数据库] Skill embedding 生成失败，已跳过:", item.name, e);
+            }
           }),
         );
         await knex("o_skillList").insert(list);

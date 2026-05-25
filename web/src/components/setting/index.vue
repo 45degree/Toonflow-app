@@ -17,6 +17,7 @@
           <uiConfig v-if="activeMenu === 'ui'" />
           <languageConfig v-if="activeMenu === 'language'" />
           <vendorConfig v-if="activeMenu === 'vendorConfig'" />
+          <embeddingConfig v-if="activeMenu === 'embeddingConfig'" />
           <requestConfig v-if="activeMenu === 'requestConfig'" />
           <loginConfig v-if="activeMenu === 'loginConfig'" />
           <agentConfog v-if="activeMenu === 'agentConfog'" />
@@ -50,6 +51,7 @@ import otherConfig from "./components/otherConfig.vue";
 import about from "./components/about.vue";
 import logoutConfig from "./components/logoutConfig.vue";
 import vendorConfig from "./components/vendorConfig.vue";
+import embeddingConfig from "./components/embeddingConfig.vue";
 import memoryConfig from "./components/memoryConfig.vue";
 import fileManagement from "./components/fileManagement.vue";
 import skillManagement from "./components/skillManagement.vue";
@@ -61,6 +63,7 @@ const menuItems = [
   { key: "ui", label: "settings.menu.ui", icon: "i-theme" },
   { key: "language", label: "settings.menu.language", icon: "i-translate" },
   { key: "vendorConfig", label: "settings.menu.vendorConfig", icon: "i-computer" },
+  { key: "embeddingConfig", label: "settings.menu.embeddingConfig", icon: "i-api" },
   { key: "modelMap", label: "settings.menu.modelMap", icon: "i-computer" },
   { key: "agentConfog", label: "settings.menu.agentConfig", icon: "i-color-filter" },
   { key: "promptManage", label: "settings.menu.promptManage", icon: "i-tips" },

@@ -15,19 +15,16 @@ export default router.post(
     summaryLimit: z.number(),
     ragLimit: z.number(),
     deepRetrieveSummaryLimit: z.number(),
-    modelOnnxFile: z.array(z.string()),
-    modelDtype: z.string(),
   }),
   async (req, res) => {
-    const { messagesPerSummary, shortTermLimit, summaryMaxLength, summaryLimit, ragLimit, deepRetrieveSummaryLimit, modelOnnxFile, modelDtype } =
-      req.body;
+    const { messagesPerSummary, shortTermLimit, summaryMaxLength, summaryLimit, ragLimit, deepRetrieveSummaryLimit } = req.body;
 
-    const upsert = async (key: string, value: string) => {
+    const upsert = async (key: string, value: string | number) => {
       const exists = await u.db("o_setting").where("key", key).first();
       if (exists) {
-        await u.db("o_setting").where("key", key).update({ value });
+        await u.db("o_setting").where("key", key).update({ value: String(value) });
       } else {
-        await u.db("o_setting").insert({ key, value });
+        await u.db("o_setting").insert({ key, value: String(value) });
       }
     };
 
@@ -37,8 +34,6 @@ export default router.post(
     await upsert("summaryLimit", summaryLimit);
     await upsert("ragLimit", ragLimit);
     await upsert("deepRetrieveSummaryLimit", deepRetrieveSummaryLimit);
-    await upsert("modelOnnxFile", JSON.stringify(modelOnnxFile));
-    await upsert("modelDtype", modelDtype);
 
     res.status(200).send(success("保存设置成功"));
   },

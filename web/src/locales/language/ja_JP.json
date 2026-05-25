@@ -47,6 +47,7 @@
     "menu": {
       "language": "言語設定",
       "vendorConfig": "モデルサービス",
+      "embeddingConfig": "Embedding Model",
       "agentConfig": "Agent 設定",
       "promptManage": "プロンプト管理",
       "skillManagement": "スキル管理",
@@ -236,6 +237,20 @@
         "cancel": "キャンセル",
         "cleared": "メモリをクリアしました",
         "clearFailed": "メモリのクリアに失敗しました"
+      },
+      "embedding": {
+        "warning": "Changing the embedding API or model may invalidate existing memory vectors. If retrieval quality drops, clear Agent Memory and let it rebuild.",
+        "apiConfig": "Embedding API Config",
+        "apiUrl": "Embedding API URL",
+        "apiUrlHelp": "Full OpenAI-compatible /v1/embeddings endpoint URL.",
+        "apiKey": "API Key",
+        "model": "Embedding Model",
+        "modelHelp": "For example: text-embedding-3-small.",
+        "saveConfig": "Save Config",
+        "restoreDefault": "Restore Defaults",
+        "msg": {
+          "saved": "Embedding config saved"
+        }
       },
       "modelMap": {
         "name": "機種名",

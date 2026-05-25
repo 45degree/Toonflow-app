@@ -93,7 +93,7 @@
             </template>
             <template #overlayContent>
               <div class="imageToolsWrap">
-                <ImageTools :src="item.filePath!" position="br" />
+                <ImageTools :src="item.filePath!" position="br" :show-delete="!!item.imageId" @delete="handleDeleteCurrentImage(item)" />
               </div>
             </template>
           </t-image>
@@ -170,7 +170,7 @@
             </template>
             <template #overlayContent>
               <div class="imageToolsWrap show">
-                <ImageTools :src="currentItem.filePath!" position="br" />
+                <ImageTools :src="currentItem.filePath!" position="br" :show-delete="!!currentItem.imageId" @delete="handleDeleteCurrentImage(currentItem!)" />
               </div>
             </template>
           </t-image>
@@ -180,12 +180,18 @@
           <t-form-item :label="$t('workbench.cornerScape.history')">
             <div class="historyImageList f">
               <div
-                v-for="item in currentItem.historyImages"
-                :key="item.id"
+                v-for="img in currentItem.historyImages"
+                :key="img.id"
                 class="historyImageItem"
-                :class="{ selected: selectedHistoryId === item.id }"
-                @click.stop="toggleHistorySelect(item.id)">
-                <t-image :src="item.filePath" :style="{ width: '100px', minWidth: '100px', height: '100px' }" :lazy="true" fit="contain" />
+                :class="{ selected: selectedHistoryId === img.id }"
+                @click.stop="toggleHistorySelect(img.id)">
+                <t-image :src="img.filePath" :style="{ width: '100px', minWidth: '100px', height: '100px' }" :lazy="true" fit="contain" />
+                <i-delete
+                  theme="outline"
+                  size="16"
+                  fill="#d0021b"
+                  class="historyDeleteBtn"
+                  @click.stop="handleDeleteHistoryImage(img.id)" />
               </div>
             </div>
           </t-form-item>
@@ -232,6 +238,11 @@
                 <template #icon><t-icon name="edit" /></template>
                 {{ $t("workbench.cornerScape.aiPolish") }}
               </t-button>
+              <t-button theme="default" variant="outline" @click="triggerUpload">
+                <template #icon><t-icon name="upload" /></template>
+                {{ $t("workbench.cornerScape.uploadImage") }}
+              </t-button>
+              <input ref="uploadInput" type="file" accept="image/*" style="display:none" @change="handleUploadImage" />
               <t-button theme="primary" @click="regenerateItem" :disabled="currentItem.state == '生成中' ? true : false">
                 <template #icon><t-icon name="refresh" /></template>
                 {{ $t("workbench.cornerScape.regenerate") }}
@@ -949,6 +960,11 @@ watch(audioBindData, (val) => {
     stopAudioPolling();
   }
 });
+const uploadInput = ref<HTMLInputElement | null>(null);
+
+function triggerUpload() {
+  uploadInput.value?.click();
+}
 async function removeAudio(id: number) {
   editForm.relepedAudio = editForm.relepedAudio.filter((a) => a.id !== id);
   await axios.post("/cornerScape/updateAssetsAudio", {
@@ -969,6 +985,97 @@ async function selectAudio() {
       audioIds: editForm.relepedAudio.map((i) => i.id),
     });
   }
+}
+
+async function handleUploadImage(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file || !currentItem.value) return;
+  try {
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+    });
+    await axios.post("/assets/saveAssets", {
+      id: currentItem.value.id,
+      projectId: project.value?.id,
+      type: currentItem.value.type,
+      base64,
+      prompt: editForm.prompt,
+    });
+    window.$message.success($t("workbench.cornerScape.msg.uploadSuccess"));
+    await getFilteredData();
+    const freshItem = dataList.value.find((d) => d.id === currentItem.value!.id);
+    if (freshItem) {
+      currentItem.value = freshItem;
+      editForm.prompt = freshItem.prompt || editForm.prompt;
+      editForm.resolution = freshItem.resolution || editForm.resolution;
+    }
+  } catch {
+    window.$message.error($t("workbench.cornerScape.msg.uploadFailed"));
+  } finally {
+    input.value = "";
+  }
+}
+
+async function handleDeleteCurrentImage(item: DataItem) {
+  if (!item.imageId) return;
+  const dialog = DialogPlugin.confirm({
+    header: $t("workbench.cornerScape.deleteImage"),
+    body: $t("workbench.cornerScape.confirmDeleteImage"),
+    theme: "warning",
+    confirmBtn: $t("workbench.assets.sure"),
+    cancelBtn: $t("workbench.assets.cancelBtn"),
+    onConfirm: async () => {
+      try {
+        await axios.post("/assets/delImage", { id: item.imageId });
+        item.state = "";
+        item.filePath = null;
+        item.imageId = 0;
+        if (currentItem.value?.id === item.id) {
+          currentItem.value.state = "";
+          currentItem.value.filePath = null;
+          currentItem.value.imageId = 0;
+        }
+        window.$message.success($t("workbench.cornerScape.msg.deleteSuccess"));
+        await getFilteredData();
+      } catch {
+        window.$message.error($t("workbench.cornerScape.msg.deleteFailed"));
+      } finally {
+        dialog.destroy();
+      }
+    },
+  });
+}
+
+async function handleDeleteHistoryImage(imageId: number) {
+  const dialog = DialogPlugin.confirm({
+    header: $t("workbench.cornerScape.deleteImage"),
+    body: $t("workbench.cornerScape.confirmDeleteImage"),
+    theme: "warning",
+    confirmBtn: $t("workbench.assets.sure"),
+    cancelBtn: $t("workbench.assets.cancelBtn"),
+    onConfirm: async () => {
+      try {
+        await axios.post("/assets/delImage", { id: imageId });
+        if (currentItem.value) {
+          currentItem.value.historyImages = currentItem.value.historyImages.filter((img) => img.id !== imageId);
+          if (currentItem.value.imageId === imageId) {
+            currentItem.value.state = "";
+            currentItem.value.filePath = null;
+            currentItem.value.imageId = 0;
+          }
+        }
+        window.$message.success($t("workbench.cornerScape.msg.deleteSuccess"));
+        await getFilteredData();
+      } catch {
+        window.$message.error($t("workbench.cornerScape.msg.deleteFailed"));
+      } finally {
+        dialog.destroy();
+      }
+    },
+  });
 }
 </script>
 
@@ -1246,12 +1353,27 @@ async function selectAudio() {
   transition: border-color 0.2s;
   flex-shrink: 0;
   overflow: hidden;
+  position: relative;
 
   &:hover {
     border-color: var(--td-brand-color-light);
+    .historyDeleteBtn {
+      opacity: 1;
+    }
   }
   &.selected {
     border-color: var(--td-brand-color);
+  }
+  .historyDeleteBtn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 

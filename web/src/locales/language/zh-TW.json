@@ -55,6 +55,7 @@
     "menu": {
       "language": "語言設定",
       "vendorConfig": "模型服務",
+      "embeddingConfig": "Embedding模型設定",
       "agentConfig": "Agent 設定",
       "promptManage": "提示詞管理",
       "skillManagement": "Skills技能管理",
@@ -243,6 +244,20 @@
         "cancel": "取消",
         "cleared": "記憶已清除",
         "clearFailed": "清除記憶失敗"
+      },
+      "embedding": {
+        "warning": "更換 Embedding API 或模型後，既有記憶向量可能失效。如檢索效果異常，建議到 Agent記憶設定 中清除記憶後重新累積。",
+        "apiConfig": "Embedding API 設定",
+        "apiUrl": "Embedding API URL",
+        "apiUrlHelp": "相容 OpenAI /v1/embeddings 的完整接口地址。",
+        "apiKey": "API Key",
+        "model": "Embedding Model",
+        "modelHelp": "例如 text-embedding-3-small。",
+        "saveConfig": "儲存設定",
+        "restoreDefault": "還原預設設定",
+        "msg": {
+          "saved": "Embedding 設定已儲存"
+        }
       },
       "modelMap": {
         "name": "模型名稱",

@@ -257,13 +257,14 @@ function makeProductionAgentStore(projectId: string) {
           concurrentCount: settingStore().otherSetting.assetsBatchGenereateSize,
         });
         if (data) {
-          data.forEach((record: { id: number; state: "未生成" | "生成中" | "已完成" | "生成失败"; src: string }) => {
+          data.forEach((record: { id: number; state: "未生成" | "生成中" | "已完成" | "生成失败"; src: string; imageId?: number }) => {
             flowData.value.assets.forEach((asset) => {
               if (asset.derive) {
                 asset.derive.forEach((derive) => {
                   if (derive.id === record.id) {
                     derive.state = record.state;
                     derive.src = record.src;
+                    if (record.imageId) derive.imageId = record.imageId;
                   }
                 });
               }
@@ -308,7 +309,7 @@ function makeProductionAgentStore(projectId: string) {
           ids: ids,
         });
         if (!data || data.length === 0) return;
-        const records = data as Array<{ id: number; state: string; src?: string; errorReason?: string; prompt?: string }>;
+        const records = data as Array<{ id: number; state: string; src?: string; errorReason?: string; prompt?: string; imageId?: number }>;
         records.forEach((record) => {
           flowData.value.assets.forEach((asset) => {
             if (!asset.derive) return;
@@ -316,6 +317,7 @@ function makeProductionAgentStore(projectId: string) {
               if (derive.id === record.id) {
                 derive.state = record.state as "未生成" | "生成中" | "已完成" | "生成失败";
                 if (record.src) derive.src = record.src;
+                if (record.imageId) derive.imageId = record.imageId;
                 derive.errorReason = record?.errorReason ?? "";
                 derive.prompt = record?.prompt ?? "";
               }

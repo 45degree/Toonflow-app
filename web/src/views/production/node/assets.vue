@@ -6,22 +6,33 @@
     </div>
     <div class="content">
       <div class="cardGrid">
-        <div v-for="asset in assets" :key="asset.id" class="assetItemBox">
+        <div v-for="(asset, pi) in assets" :key="asset.id" class="assetItemBox">
           <t-card class="assetCard">
             <div v-if="asset.src" class="assetImageWrap">
               <t-image :src="asset.src" fit="contain" class="assetImage" :preview="true">
                 <template #overlayContent>
                   <div class="imageToolsWrap show">
-                    <ImageTools :src="asset.src" position="br" />
+                    <ImageTools :src="asset.src" position="br" :show-delete="!!asset.id" @delete="handleDeleteParentImage(pi)" />
                   </div>
                 </template>
               </t-image>
+              <t-tooltip theme="primary" :content="$t('workbench.production.node.assets.uploadImage')">
+                <div class="uploadBtn ac" @click.stop="triggerParentUpload(pi)">
+                  <i-upload theme="outline" size="14" fill="#fff" />
+                </div>
+              </t-tooltip>
             </div>
             <div v-else class="assetImageWrap assetImagePlaceholder">
               <t-loading v-if="asset.state == '生成中'" size="small" />
               <span v-else-if="asset.state == '生成失败'" style="color: red">{{ $t("workbench.production.node.assets.generateFailed") }}</span>
               <t-empty v-else size="small" :title="$t('workbench.production.node.assets.notGenerated')" />
+              <t-tooltip theme="primary" :content="$t('workbench.production.node.assets.uploadImage')">
+                <div class="uploadBtn ac" @click.stop="triggerParentUpload(pi)">
+                  <i-upload theme="outline" size="14" fill="#fff" />
+                </div>
+              </t-tooltip>
             </div>
+            <input :ref="(el: any) => setParentUploadRef(el, pi)" type="file" accept="image/*" style="display:none" @change="(e: Event) => handleParentImageUpload(e, pi)" />
             <div class="cardInfo">
               <div class="cardName">
                 <span class="nameText">{{ asset.name }}</span>
@@ -34,12 +45,12 @@
             <i-right size="32"></i-right>
           </div>
           <div class="deriveAssets">
-            <t-card v-for="(item, index) in asset.derive" :key="index" class="assetCard" @click="generateAssetsImage(item, asset.src)">
+            <t-card v-for="(item, di) in asset.derive" :key="di" class="assetCard" @click="generateAssetsImage(item, asset.src)">
               <div v-if="item.src && item.state == '已完成'" class="assetImageWrap">
                 <t-image :src="item.src" fit="contain" class="assetImage" :preview="true">
                   <template #overlayContent>
                     <div class="imageToolsWrap show">
-                      <ImageTools :src="item.src" position="br" />
+                      <ImageTools :src="item.src" position="br" :show-delete="!!item.id" @delete="handleDeleteDeriveImage(pi, di)" />
                     </div>
                   </template>
                 </t-image>
@@ -51,11 +62,19 @@
                 </t-tooltip>
                 <t-empty v-else size="small" :title="$t('workbench.production.node.assets.notGenerated')" />
               </div>
-              <t-tooltip theme="primary" :content="$t('workbench.production.node.storyboard.deleteNode')">
-                <div class="remove ac" @click.stop="removeFn(item.id!)">
-                  <i-delete theme="outline" size="18" fill="#fff" />
-                </div>
-              </t-tooltip>
+              <div class="cardActions">
+                <t-tooltip theme="primary" :content="$t('workbench.production.node.assets.uploadImage')">
+                  <div class="uploadBtn ac" @click.stop="triggerDeriveUpload(pi, di)">
+                    <i-upload theme="outline" size="14" fill="#fff" />
+                  </div>
+                </t-tooltip>
+                <t-tooltip theme="primary" :content="$t('workbench.production.node.storyboard.deleteNode')">
+                  <div class="remove ac" @click.stop="removeFn(item.id!)">
+                    <i-delete theme="outline" size="18" fill="#fff" />
+                  </div>
+                </t-tooltip>
+              </div>
+              <input :ref="(el: any) => setDeriveUploadRef(el, pi, di)" type="file" accept="image/*" style="display:none" @change="(e: Event) => handleDeriveImageUpload(e, pi, di)" />
               <div class="cardInfo">
                 <div class="cardName">
                   <span class="nameText">{{ item.name }}</span>
@@ -158,6 +177,129 @@ async function removeFn(id: number) {
     },
   });
 }
+
+const parentUploadRefs = ref<Record<number, HTMLInputElement | null>>({});
+const deriveUploadRefs = ref<Record<string, HTMLInputElement | null>>({});
+
+function setParentUploadRef(el: any, pi: number) {
+  if (el) parentUploadRefs.value[pi] = el as HTMLInputElement;
+}
+function setDeriveUploadRef(el: any, pi: number, di: number) {
+  if (el) deriveUploadRefs.value[`${pi}_${di}`] = el as HTMLInputElement;
+}
+
+function triggerParentUpload(pi: number) {
+  parentUploadRefs.value[pi]?.click();
+}
+function triggerDeriveUpload(pi: number, di: number) {
+  deriveUploadRefs.value[`${pi}_${di}`]?.click();
+}
+
+async function handleParentImageUpload(event: Event, pi: number) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  const asset = assets.value[pi];
+  if (!file || !asset) return;
+  try {
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+    });
+    const { data } = await axios.post("/assets/saveAssets", {
+      id: asset.id,
+      projectId: project.value?.id,
+      type: asset.type,
+      base64,
+    });
+    asset.src = data.imageUrl || "";
+    asset.state = "已完成";
+    asset.imageId = data.imageId;
+    window.$message.success($t("workbench.production.node.assets.uploadSuccess"));
+  } catch {
+    window.$message.error($t("workbench.production.node.assets.uploadFailed"));
+  } finally {
+    input.value = "";
+  }
+}
+
+async function handleDeriveImageUpload(event: Event, pi: number, di: number) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  const derive = assets.value[pi]?.derive[di];
+  if (!file || !derive) return;
+  try {
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+    });
+    const { data } = await axios.post("/assets/saveAssets", {
+      id: derive.id,
+      projectId: project.value?.id,
+      type: derive.type,
+      base64,
+    });
+    derive.src = data.imageUrl || "";
+    derive.state = "已完成";
+    derive.imageId = data.imageId;
+    window.$message.success($t("workbench.production.node.assets.uploadSuccess"));
+  } catch {
+    window.$message.error($t("workbench.production.node.assets.uploadFailed"));
+  } finally {
+    input.value = "";
+  }
+}
+
+async function handleDeleteParentImage(pi: number) {
+  const asset = assets.value[pi];
+  if (!asset?.imageId) return;
+  const dialog = DialogPlugin.confirm({
+    header: $t("workbench.production.node.assets.deleteImage"),
+    body: $t("workbench.production.node.assets.confirmDeleteImage"),
+    theme: "warning",
+    confirmBtn: $t("workbench.assets.sure"),
+    cancelBtn: $t("workbench.assets.cancelBtn"),
+    onConfirm: async () => {
+      try {
+        await axios.post("/assets/delImage", { id: asset.imageId });
+        asset.src = "";
+        asset.state = "未生成";
+        asset.imageId = undefined;
+        window.$message.success($t("workbench.production.node.assets.deleteSuccess"));
+      } catch {
+        window.$message.error($t("workbench.production.node.assets.deleteFailed"));
+      } finally {
+        dialog.destroy();
+      }
+    },
+  });
+}
+
+async function handleDeleteDeriveImage(pi: number, di: number) {
+  const derive = assets.value[pi]?.derive[di];
+  if (!derive?.imageId) return;
+  const dialog = DialogPlugin.confirm({
+    header: $t("workbench.production.node.assets.deleteImage"),
+    body: $t("workbench.production.node.assets.confirmDeleteImage"),
+    theme: "warning",
+    confirmBtn: $t("workbench.assets.sure"),
+    cancelBtn: $t("workbench.assets.cancelBtn"),
+    onConfirm: async () => {
+      try {
+        await axios.post("/assets/delImage", { id: derive.imageId });
+        derive.src = "";
+        derive.state = "未生成";
+        derive.imageId = undefined;
+        window.$message.success($t("workbench.production.node.assets.deleteSuccess"));
+      } catch {
+        window.$message.error($t("workbench.production.node.assets.deleteFailed"));
+      } finally {
+        dialog.destroy();
+      }
+    },
+  });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -208,10 +350,17 @@ async function removeFn(id: number) {
             .remove {
               opacity: 1;
             }
+            .uploadBtn {
+              opacity: 1;
+            }
+            .cardActions {
+              opacity: 1;
+            }
           }
           .assetImageWrap {
             width: 100%;
             aspect-ratio: 1 / 1;
+            position: relative;
 
             &.assetImagePlaceholder {
               display: flex;
@@ -220,6 +369,21 @@ async function removeFn(id: number) {
               background-color: var(--td-bg-color-container-hover, #f5f5f5);
               border-radius: 4px;
               overflow: hidden;
+            }
+
+            .uploadBtn {
+              position: absolute;
+              top: 3px;
+              right: 3px;
+              z-index: 10;
+              padding: 5px;
+              border-radius: 10px;
+              background-color: rgba(0, 123, 255, 0.7);
+              cursor: pointer;
+              opacity: 0;
+              &:hover {
+                background-color: rgba(0, 123, 255, 1);
+              }
             }
 
             .assetImage {
@@ -280,16 +444,29 @@ async function removeFn(id: number) {
           align-items: stretch;
           gap: 12px;
 
-          .remove {
+          .cardActions {
             position: absolute;
             top: 3px;
             right: 3px;
             z-index: 9999;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+          }
+          .uploadBtn {
+            padding: 5px;
+            border-radius: 10px;
+            background-color: rgba(0, 123, 255, 0.7);
+            cursor: pointer;
+            &:hover {
+              background-color: rgba(0, 123, 255, 1);
+            }
+          }
+          .remove {
             padding: 5px;
             border-radius: 10px;
             background-color: rgba(220, 50, 50, 0.7);
             cursor: pointer;
-            opacity: 0;
             &:hover {
               background-color: rgba(220, 50, 50, 1);
             }

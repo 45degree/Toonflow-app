@@ -2,7 +2,10 @@
   <t-card class="storyboardTable">
     <div class="titleBar dragHandle pr">
       <div class="title c">{{ $t("workbench.production.node.storyboardTable.title") }}</div>
-      <t-button size="small" variant="text" @click="openEdit">{{ $t("workbench.production.edit") }}</t-button>
+      <div class="titleActions">
+        <t-button size="small" variant="text" @click="handleExport">{{ $t("workbench.production.node.storyboardTable.exportTable") }}</t-button>
+        <t-button size="small" variant="text" @click="openEdit">{{ $t("workbench.production.edit") }}</t-button>
+      </div>
       <Handle :id="props.handleIds.target" type="target" :position="Position.Left" style="left: calc(-1 * var(--td-comp-paddingLR-xl))" />
       <Handle :id="props.handleIds.source" type="source" :position="Position.Right" style="right: calc(-1 * var(--td-comp-paddingLR-xl))" />
     </div>
@@ -104,6 +107,70 @@ function onPaste(e: ClipboardEvent) {
     }
   }
 }
+
+function parseMdTable(md: string): string[][] {
+  let content = md;
+  const wrapperMatch = content.match(/<storyboardTable>([\s\S]*?)<\/storyboardTable>/i);
+  if (wrapperMatch) content = wrapperMatch[1].trim();
+
+  const lines = content.split(/\r?\n/).filter((l) => l.trim().startsWith("|"));
+  if (lines.length < 2) return [];
+
+  const parseRow = (line: string): string[] =>
+    line
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((c) => c.trim());
+
+  const rows: string[][] = [];
+  rows.push(parseRow(lines[0])); // header
+  for (let i = 2; i < lines.length; i++) {
+    rows.push(parseRow(lines[i]));
+  }
+  return rows;
+}
+
+function toCsv(rows: string[][]): string {
+  return rows
+    .map((row) =>
+      row
+        .map((cell) => {
+          if (/[,"\n\r]/.test(cell)) {
+            return `"${cell.replace(/"/g, '""')}"`;
+          }
+          return cell;
+        })
+        .join(","),
+    )
+    .join("\r\n");
+}
+
+function handleExport() {
+  const md = storyboardTable.value || "";
+  if (!md.trim()) return;
+
+  try {
+    const rows = parseMdTable(md);
+    if (rows.length === 0) {
+      window.$message.warning($t("workbench.production.node.storyboardTable.exportFailed"));
+      return;
+    }
+    const csv = "\uFEFF" + toCsv(rows);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = $t("workbench.production.node.storyboardTable.title") + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    window.$message.success($t("workbench.production.node.storyboardTable.exportSuccess"));
+  } catch {
+    window.$message.error($t("workbench.production.node.storyboardTable.exportFailed"));
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -120,6 +187,12 @@ function onPaste(e: ClipboardEvent) {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    .titleActions {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
   }
 
   .title {

@@ -85,6 +85,10 @@ export default async (knex: Knex): Promise<void> => {
       enable: 0,
     });
   }
+  const siliconflowCodePath = path.join(u.getPath("vendor"), "siliconflow.ts");
+  if (fs.existsSync(siliconflowCodePath)) {
+    await tempOnsert(fs.readFileSync(siliconflowCodePath, "utf-8"));
+  }
   //检测是否包含新增音色绑定提示词
   const existAudioPrompt = await db("o_prompt").where("type", "audioBindPrompt").first();
   if (!existAudioPrompt)

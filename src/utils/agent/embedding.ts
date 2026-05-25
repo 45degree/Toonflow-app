@@ -1,50 +1,68 @@
-import * as ONNX_WEB from "onnxruntime-web";
-import { pipeline, env as transformersEnv, FeatureExtractionPipeline } from "@huggingface/transformers";
-import path from "path";
-import fs from "fs";
-import getPath from "@/utils/getPath";
+import axios from "axios";
 import db from "@/utils/db";
 
-// ── 模型配置 ──
-// const modelOnnxFile = ["all-MiniLM-L6-v2", "onnx", "model_fp16.onnx"]; // 模型文件路径
-// const modelDtype = "fp16" as const; // 量化类型：fp32
-let extractor: FeatureExtractionPipeline | null = null;
+const DEFAULT_EMBEDDING_API_URL = "https://api.openai.com/v1/embeddings";
+const DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small";
 
-export async function initEmbedding(): Promise<void> {
-  if (extractor) return;
+interface EmbeddingConfig {
+  embeddingApiUrl: string;
+  embeddingApiKey: string;
+  embeddingModel: string;
+}
 
-  const modelConfigData = await db("o_setting").whereIn("key", ["modelOnnxFile", "modelDtype"]);
-  const modelObj: Record<string, string> = {};
-  Object.entries(modelConfigData).forEach(([key, value]) => {
-    modelObj[key] = value as string;
-  });
-  let modelOnnxFile = modelObj?.modelOnnxFile ? JSON.parse(modelObj.modelOnnxFile) : ["all-MiniLM-L6-v2", "onnx", "model_fp16.onnx"]; // 模型文件路径
-  let modelDtype = modelObj?.modelDtype ?? ("fp16" as const); // 量化类型：fp32
-  const onnxPath = path.join(getPath("models"), ...modelOnnxFile);
-  if (!fs.existsSync(onnxPath)) {
-    throw new Error(`Embedding 模型文件不存在: ${onnxPath}`);
+let configCache: EmbeddingConfig | null = null;
+
+async function getEmbeddingConfig(): Promise<EmbeddingConfig> {
+  const rows = await db("o_setting").whereIn("key", ["embeddingApiUrl", "embeddingApiKey", "embeddingModel"]);
+  const values: Record<string, string> = {};
+  for (const row of rows) {
+    if (row.key) values[row.key] = row.value ?? "";
   }
 
-  transformersEnv.allowRemoteModels = false;
-  transformersEnv.allowLocalModels = true;
-  transformersEnv.localModelPath = getPath("models").replace(/\\/g, "/") + "/";
+  return {
+    embeddingApiUrl: values.embeddingApiUrl || DEFAULT_EMBEDDING_API_URL,
+    embeddingApiKey: values.embeddingApiKey || "",
+    embeddingModel: values.embeddingModel || DEFAULT_EMBEDDING_MODEL,
+  };
+}
 
-  const modelFolder = modelOnnxFile[0];
-  // @ts-ignore - pipeline 重载联合类型过于复杂
-  extractor = await pipeline("feature-extraction", modelFolder, { dtype: modelDtype });
+export async function initEmbedding(): Promise<void> {
+  if (configCache) return;
+  configCache = await getEmbeddingConfig();
 }
 
 export async function getEmbedding(text: string): Promise<number[]> {
-  if (!extractor) await initEmbedding();
-  const output = await extractor!(text, { pooling: "mean", normalize: true });
-  return Array.from(output.data as Float32Array);
+  if (!configCache) await initEmbedding();
+  const config = configCache!;
+  if (!config.embeddingApiUrl) throw new Error("Embedding API URL 未配置");
+  if (!config.embeddingModel) throw new Error("Embedding 模型未配置");
+
+  const response = await axios.post(
+    config.embeddingApiUrl,
+    {
+      model: config.embeddingModel,
+      input: text,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(config.embeddingApiKey ? { Authorization: `Bearer ${config.embeddingApiKey}` } : {}),
+      },
+    },
+  );
+
+  const embedding = response.data?.data?.[0]?.embedding;
+  if (!Array.isArray(embedding) || embedding.some((value) => typeof value !== "number")) {
+    throw new Error("Embedding API 响应格式无效");
+  }
+  return embedding;
 }
 
 export function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length === 0 || b.length === 0 || a.length !== b.length) return -Infinity;
   return a.reduce((dot, v, i) => dot + v * b[i], 0);
 }
 
 export async function disposeEmbedding(): Promise<void> {
-  await extractor?.dispose?.();
-  extractor = null;
+  configCache = null;
 }

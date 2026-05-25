@@ -9,6 +9,7 @@
       "copy": "复制图片",
       "preview": "预览",
       "download": "下载",
+      "delete": "删除",
       "msg": {
         "imageLoadFailed": "图片加载失败",
         "convertFailed": "转换失败",
@@ -85,6 +86,7 @@
       "ui": "界面设置",
       "language": "语言设置",
       "vendorConfig": "模型服务",
+      "embeddingConfig": "Embedding模型配置",
       "modelMap": "模型映射",
       "agentConfig": "Agent配置",
       "promptManage": "提示词管理",
@@ -318,6 +320,20 @@
         "cancel": "取消",
         "cleared": "记忆已清空",
         "clearFailed": "清空记忆失败"
+      },
+      "embedding": {
+        "warning": "更换 Embedding API 或模型后，已有记忆向量可能失效。如检索效果异常，建议到 Agent记忆配置 中清空记忆后重新积累。",
+        "apiConfig": "Embedding API 配置",
+        "apiUrl": "Embedding API URL",
+        "apiUrlHelp": "兼容 OpenAI /v1/embeddings 的完整接口地址。",
+        "apiKey": "API Key",
+        "model": "Embedding Model",
+        "modelHelp": "例如 text-embedding-3-small。",
+        "saveConfig": "保存配置",
+        "restoreDefault": "恢复默认配置",
+        "msg": {
+          "saved": "Embedding 配置已保存"
+        }
       },
       "modelMap": {
         "name": "模型名称",
@@ -966,6 +982,9 @@
       "promptPh": "请输入提示词",
       "aiPolish": "AI 润色",
       "regenerate": "重新生成",
+      "uploadImage": "上传图片",
+      "deleteImage": "删除图片",
+      "confirmDeleteImage": "确认要删除这张图片吗？删除后不可恢复",
       "filterRole": "人物",
       "filterScene": "场景",
       "filterTool": "道具",
@@ -990,7 +1009,11 @@
         "emptyPrompt": "勾选的数据{emptyPromptNames}提示词为空,请先生成提示词",
         "promptGenFail": "提示词生成失败",
         "saveSuccess": "修改提示词成功",
-        "saveFailed": "提示词修改失败"
+        "saveFailed": "提示词修改失败",
+        "uploadSuccess": "图片上传成功",
+        "uploadFailed": "图片上传失败",
+        "deleteSuccess": "图片删除成功",
+        "deleteFailed": "图片删除失败"
       },
       "history": "历史图片",
       "confirmReplace": "确认替换",
@@ -1226,7 +1249,10 @@
         },
         "storyboardTable": {
           "title": "分镜表",
-          "editDialog": "编辑分镜表"
+          "editDialog": "编辑分镜表",
+          "exportTable": "导出CSV",
+          "exportSuccess": "分镜表导出成功",
+          "exportFailed": "分镜表导出失败"
         },
         "assets": {
           "title": "衍生资产",
@@ -1234,7 +1260,14 @@
           "notGenerated": "未生成",
           "originalAsset": "原资产",
           "derived": "衍生",
-          "noDerivedAssets": "无衍生资产"
+          "noDerivedAssets": "无衍生资产",
+          "uploadImage": "上传图片",
+          "uploadSuccess": "图片上传成功",
+          "uploadFailed": "图片上传失败",
+          "deleteImage": "删除图片",
+          "confirmDeleteImage": "确认要删除这张图片吗？删除后不可恢复",
+          "deleteSuccess": "图片删除成功",
+          "deleteFailed": "图片删除失败"
         },
         "poster": {
           "title": "视频封面",

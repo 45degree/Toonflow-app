@@ -54,6 +54,7 @@ export default router.post(
             prompt: item.prompt ?? "",
             desc: item.describe ?? "",
             src: item.filePath && (await u.oss.getSmallImageUrl(item.filePath!)),
+            imageId: item.imageId,
             derive: await Promise.all(
               childAssetsData
                 .filter((child) => child.assetsId === item.id)
@@ -65,6 +66,7 @@ export default router.post(
                   prompt: child.prompt,
                   desc: child.describe ?? "",
                   src: child.filePath && (await u.oss.getSmallImageUrl(child.filePath!)),
+                  imageId: child.imageId,
                   state: child.state ?? "未生成", //todo：矫正状态值
                 })),
             ),
@@ -119,6 +121,7 @@ export default router.post(
             prompt: item.prompt ?? "",
             desc: item.describe ?? "",
             src: item.filePath && (await u.oss.getSmallImageUrl(item.filePath!)),
+            imageId: item.imageId,
             flowId: item.flowId,
             derive: await Promise.all(
               childAssetsData
@@ -131,6 +134,7 @@ export default router.post(
                   type: child.type,
                   desc: child.describe ?? "",
                   src: child.filePath && (await u.oss.getSmallImageUrl(child.filePath!)),
+                  imageId: child.imageId,
                   state: child.state ?? "未生成",
                   errorReason: child?.errorReason ?? "",
                   flowId: child.flowId,

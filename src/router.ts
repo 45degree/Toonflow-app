@@ -131,6 +131,8 @@ import route127 from "./routes/setting/dbConfig/exportData";
 import route128 from "./routes/setting/dbConfig/importData";
 import route129 from "./routes/setting/dev/getSwitchAiDevTool";
 import route130 from "./routes/setting/dev/updateSwitchAiDevTool";
+import route168 from "./routes/setting/embeddingConfig/getEmbeddingConfig";
+import route169 from "./routes/setting/embeddingConfig/saveEmbeddingConfig";
 import route131 from "./routes/setting/fileManagement/openFolder";
 import route132 from "./routes/setting/getTextModel";
 import route133 from "./routes/setting/loginConfig/getUser";
@@ -300,6 +302,8 @@ export default async (app: Express) => {
   app.use("/api/setting/dbConfig/importData", route128);
   app.use("/api/setting/dev/getSwitchAiDevTool", route129);
   app.use("/api/setting/dev/updateSwitchAiDevTool", route130);
+  app.use("/api/setting/embeddingConfig/getEmbeddingConfig", route168);
+  app.use("/api/setting/embeddingConfig/saveEmbeddingConfig", route169);
   app.use("/api/setting/fileManagement/openFolder", route131);
   app.use("/api/setting/getTextModel", route132);
   app.use("/api/setting/loginConfig/getUser", route133);

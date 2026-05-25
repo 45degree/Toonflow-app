@@ -12,12 +12,14 @@ export default router.post(
   }),
   async (req, res) => {
     const { id } = req.body;
+    const imageRow = await u.db("o_image").where({ id }).first();
     await u.db("o_assets").where({ imageId: id }).update({
       imageId: null,
     });
-    await u.db("o_image").where({ id: id }).delete();
-    const assetsData = await u.db("o_image").where("id", id);
-    await Promise.all(assetsData.map((i) => i.filePath && u.oss.deleteFile(i.filePath)));
+    await u.db("o_image").where({ id }).delete();
+    if (imageRow?.filePath) {
+      await u.oss.deleteFile(imageRow.filePath);
+    }
     res.status(200).send(success({ message: "资产图片删除成功" }));
   },
 );

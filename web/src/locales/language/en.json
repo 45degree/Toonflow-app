@@ -47,6 +47,7 @@
     "menu": {
       "language": "Language",
       "vendorConfig": "Model Providers",
+      "embeddingConfig": "Embedding Model",
       "agentConfig": "Agent Config",
       "promptManage": "Prompt Management",
       "skillManagement": "skillsSkillsManagement",
@@ -237,6 +238,20 @@
         "cancel": "Cancel",
         "cleared": "Memory cleared",
         "clearFailed": "Failed to clear memory"
+      },
+      "embedding": {
+        "warning": "Changing the embedding API or model may invalidate existing memory vectors. If retrieval quality drops, clear Agent Memory and let it rebuild.",
+        "apiConfig": "Embedding API Config",
+        "apiUrl": "Embedding API URL",
+        "apiUrlHelp": "Full OpenAI-compatible /v1/embeddings endpoint URL.",
+        "apiKey": "API Key",
+        "model": "Embedding Model",
+        "modelHelp": "For example: text-embedding-3-small.",
+        "saveConfig": "Save Config",
+        "restoreDefault": "Restore Defaults",
+        "msg": {
+          "saved": "Embedding config saved"
+        }
       },
       "modelMap": {
         "name": "Model name",

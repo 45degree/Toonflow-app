@@ -5,10 +5,10 @@ export default function replaceUrl(url: string): string {
     let cleanedPath = '';
     try {
         const pathname = new URL(url).pathname;
-        cleanedPath = pathname.replace(/^\/oss/, '').replace(/^\/smallImage/, '');
+        cleanedPath = pathname.replace(/^(\/oss)+/, '').replace(/^(\/smallImage)+/, '');
     } catch (e) {
-        // 如果不是有效的URL，则直接使用原字符串
-        cleanedPath = url;
+        // 如果不是有效的URL，则直接使用原字符串，同时去掉可能的前缀
+        cleanedPath = url.replace(/^(\/oss)+/, "").replace(/^(\/smallImage)+/, "");
     }
 
     // 防止路径穿越：对路径进行规范化后，确保不含上溯分量

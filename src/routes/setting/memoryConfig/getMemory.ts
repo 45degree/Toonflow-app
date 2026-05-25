@@ -13,8 +13,6 @@ export default router.get("/", async (req, res) => {
       "summaryLimit",
       "ragLimit",
       "deepRetrieveSummaryLimit",
-      "modelOnnxFile",
-      "modelDtype",
     ]);
 
   if (!settingData) return res.status(400).send(error(`获取记忆配置失败`));
@@ -23,11 +21,7 @@ export default router.get("/", async (req, res) => {
   settingData.forEach((i) => {
     if (i.key && i.value) {
       let value: number | string | string[] = i.value;
-      if (i.key == "modelOnnxFile") {
-        value = JSON.parse(i.value);
-      } else if (i.key != "modelDtype") {
-        value = Number(value);
-      }
+      value = Number(value);
       memoryObj[i.key] = value;
     }
   });

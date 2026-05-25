@@ -47,6 +47,7 @@
     "menu": {
       "language": "Язык",
       "vendorConfig": "Поставщики моделей",
+      "embeddingConfig": "Embedding Model",
       "agentConfig": "Настройки Agent",
       "promptManage": "Управление подсказками",
       "skillManagement": "Управление навыками",
@@ -235,6 +236,20 @@
         "cancel": "Отмена",
         "cleared": "Память очищена",
         "clearFailed": "Не удалось очистить память"
+      },
+      "embedding": {
+        "warning": "Changing the embedding API or model may invalidate existing memory vectors. If retrieval quality drops, clear Agent Memory and let it rebuild.",
+        "apiConfig": "Embedding API Config",
+        "apiUrl": "Embedding API URL",
+        "apiUrlHelp": "Full OpenAI-compatible /v1/embeddings endpoint URL.",
+        "apiKey": "API Key",
+        "model": "Embedding Model",
+        "modelHelp": "For example: text-embedding-3-small.",
+        "saveConfig": "Save Config",
+        "restoreDefault": "Restore Defaults",
+        "msg": {
+          "saved": "Embedding config saved"
+        }
       },
       "modelMap": {
         "name": "Название модели",

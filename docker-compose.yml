@@ -1,0 +1,14 @@
+services:
+  toonflow:
+    build:
+      context: .
+    image: toonflow:local
+    container_name: toonflow
+    ports:
+      - "10588:10588"
+    environment:
+      NODE_ENV: prod
+      PORT: "10588"
+    volumes:
+      - ./toonflow-data:/app/data
+    restart: unless-stopped
